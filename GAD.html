@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<link rel="icon" href="" type="image/png">
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bionic Owls Archive</title>
+<style>
+  body { margin:0; font-family:"Poppins",sans-serif; background:#f5f5f2; color:#2e2e2e; }
+  header { background:#2e2e2e; color:#fff; padding:20px 40px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;}
+  header h1 { font-size:1.8rem; margin:0;}
+  nav a { color:#fff; text-decoration:none; margin-left:15px;}
+  nav a:hover { text-decoration:underline;}
+  #logoutBtn, #loginBtn { margin-left:15px; background:#555; border:none; padding:5px 10px; color:white; border-radius:5px; cursor:pointer;}
+  #logoutBtn:hover, #loginBtn:hover { background:#777;}
+  #greeting { margin-left:15px; font-weight:bold; }
+  .section { padding:50px 20px; text-align:center;}
+  .artifact-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:30px; max-width:1200px; margin:auto;}
+  .artifact-card { background:white; border-radius:12px; padding:20px; position:relative; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+  .artifact-card img { width:100%; border-radius:8px; margin-bottom:10px;}
+  .artifact-card button { position:absolute; top:10px; right:10px; background:#d9534f; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;}
+  .artifact-card button:hover { background:#c9302c;}
+  .editBtn { top:40px; background:#0275d8;}
+  .editBtn:hover { background:#025aa5;}
+  input, button { padding:10px; font-size:1rem; border-radius:6px; border:1px solid #ccc;}
+  button { cursor:pointer; }
+  #signupModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000;}
+  #signupContent { background:white; padding:30px; border-radius:10px; text-align:center; width:90%; max-width:400px;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Bionic Owls Archive</h1>
+<nav>
+  <a href="#about">About</a>
+  <a href="#artifacts">Artifacts</a>
+  <a href="#upload">Upload</a>
+  <a href="https://andreibrindau.github.io/Bionic-Owls/m.html" target="_blank">Go to Bionic Owls Website</a>
+  <span id="greeting"></span>
+  <button id="loginBtn" style="display:none;">Login</button>
+  <button id="logoutBtn" style="display:none;">Logout</button>
+</nav>
+</header>
+
+<section class="section hero">
+<h2>Preserving the Past, Empowering Discovery</h2>
+<p>Explore the digital archive of archaeological artifacts.</p>
+</section>
+
+<section class="section" id="about">
+<h3>About the Archive</h3>
+<p>The <strong>Bionic Owls Archive</strong> allows viewing, searching, and optionally contributing artifacts. Sign up to add, edit, or delete artifacts.</p>
+</section>
+
+<section class="section" id="artifacts">
+<h3>Artifact Archive</h3>
+<input type="text" id="searchInput" placeholder="Search artifacts..." style="margin-bottom:20px;">
+<div class="artifact-grid" id="artifactGrid">
+  <p style="grid-column:1/-1;color:#777;">No artifacts uploaded yet.</p>
+</div>
+</section>
+
+<section class="section" id="upload">
+<h3>Upload New Artifact</h3>
+<form id="uploadForm">
+  <input type="text" id="artifactName" placeholder="Artifact Name" required><br>
+  <input type="text" id="artifactOrigin" placeholder="Artifact Origin" required><br>
+  <input type="file" id="artifactImage" accept="image/*" required><br>
+  <button type="submit">Add Artifact</button>
+</form>
+</section>
+
+<footer style="background:#2e2e2e;color:#ccc;text-align:center;padding:30px;">
+  <p>&copy; 2025 Bionic Owls Archive</p>
+</footer>
+
+<div id="signupModal">
+  <div id="signupContent">
+    <h3>Sign Up / Sign In</h3>
+    <input type="text" id="usernameInput" placeholder="Enter username"><br><br>
+    <input type="email" id="emailInput" placeholder="Enter email"><br><br>
+    <input type="password" id="passwordInput" placeholder="Enter password"><br><br>
+    <button id="signupBtn">Sign Up / Sign In</button>
+    <button id="guestBtn">Continue as Guest</button>
+  </div>
+</div>
+
+<script>
+// Current user
+let currentUsername = localStorage.getItem("currentUsername") || "";
+let currentEmail = localStorage.getItem("currentEmail") || "";
+
+// Elements
+const modal = document.getElementById("signupModal");
+const usernameInput = document.getElementById("usernameInput");
+const emailInput = document.getElementById("emailInput");
+const passwordInput = document.getElementById("passwordInput");
+const logoutBtn = document.getElementById("logoutBtn");
+const loginBtn = document.getElementById("loginBtn");
+const greeting = document.getElementById("greeting");
+
+// Validate email
+function isValidEmail(email){
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+// Update UI
+function updateUIAfterLogin(){
+    if(currentUsername){
+        logoutBtn.style.display = "inline-block";
+        loginBtn.style.display = "none";
+        greeting.textContent = `Hello, ${currentUsername}`;
+    } else {
+        logoutBtn.style.display = "none";
+        loginBtn.style.display = "inline-block";
+        greeting.textContent = "";
+    }
+    renderArtifacts(allArtifacts);
+}
+
+// Sign up / login
+document.getElementById("signupBtn").onclick = ()=>{
+    const username = usernameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    if(!username){ alert("Enter a username"); return; }
+    if(!isValidEmail(email)){ alert("Enter a valid email"); return; }
+    if(password.length < 6){ alert("Password must be at least 6 characters"); return; }
+
+    currentUsername = username;
+    currentEmail = email;
+    localStorage.setItem("currentUsername", currentUsername);
+    localStorage.setItem("currentEmail", currentEmail);
+    localStorage.setItem("password_"+email, password);
+    modal.style.display = "none";
+    updateUIAfterLogin();
+}
+
+// Guest
+document.getElementById("guestBtn").onclick = ()=>{
+    currentUsername = "";
+    currentEmail = "";
+    modal.style.display = "none";
+    updateUIAfterLogin();
+}
+
+// Login button
+loginBtn.onclick = ()=>{ modal.style.display = "flex"; }
+
+// Logout
+logoutBtn.onclick = ()=>{
+    currentUsername = "";
+    currentEmail = "";
+    localStorage.removeItem("currentUsername");
+    localStorage.removeItem("currentEmail");
+    updateUIAfterLogin();
+}
+
+// Artifact storage
+let allArtifacts = JSON.parse(localStorage.getItem("artifacts") || "[]");
+const grid = document.getElementById("artifactGrid");
+const searchInput = document.getElementById("searchInput");
+const uploadForm = document.getElementById("uploadForm");
+
+// AI keyword mapping
+const aiKeywords = {
+    "pottery":["ceramic","earthenware","clay"],
+    "vase":["ceramic","pottery"],
+    "coin":["currency","money","numismatic"],
+    "statue":["sculpture","figure","idol"]
+};
+
+// Render artifacts
+function renderArtifacts(list){
+    grid.innerHTML = "";
+    if(list.length===0){ grid.innerHTML='<p style="grid-column:1/-1;color:#777;">No artifacts uploaded yet.</p>'; return;}
+    list.forEach((artifact,index)=>{
+        const card = document.createElement("div");
+        card.className="artifact-card";
+        let buttons = "";
+        if(currentEmail && artifact.email===currentEmail){
+            buttons = `<button data-index="${index}">Delete</button>
+                       <button class="editBtn" data-index="${index}">Edit</button>`;
+        }
+        card.innerHTML = `
+          <img src="${artifact.image}" alt="${artifact.name}">
+          <h4>${artifact.name}</h4>
+          <p>${artifact.origin}</p>
+          <p><em>Uploaded by: ${artifact.username}</em></p>
+          ${buttons}
+        `;
+        grid.appendChild(card);
+    });
+
+    // Delete button
+    document.querySelectorAll(".artifact-card button:not(.editBtn)").forEach(btn=>{
+        btn.addEventListener("click", e=>{
+            const idx = e.target.dataset.index;
+            allArtifacts.splice(idx,1);
+            localStorage.setItem("artifacts", JSON.stringify(allArtifacts));
+            renderArtifacts(allArtifacts);
+        });
+    });
+
+    // Edit button
+    document.querySelectorAll(".editBtn").forEach(btn=>{
+        btn.addEventListener("click", e=>{
+            const idx = e.target.dataset.index;
+            const artifact = allArtifacts[idx];
+            const newName = prompt("Edit Artifact Name:", artifact.name);
+            const newOrigin = prompt("Edit Artifact Origin:", artifact.origin);
+            if(newName) artifact.name = newName;
+            if(newOrigin) artifact.origin = newOrigin;
+            localStorage.setItem("artifacts", JSON.stringify(allArtifacts));
+            renderArtifacts(allArtifacts);
+        });
+    });
+}
+renderArtifacts(allArtifacts);
+
+// AI-powered search
+searchInput.addEventListener("input", ()=>{
+    const q = searchInput.value.toLowerCase();
+    if(!q){ renderArtifacts(allArtifacts); return; }
+
+    let searchTerms = [q];
+    if(aiKeywords[q]) searchTerms = searchTerms.concat(aiKeywords[q]);
+
+    const filtered = allArtifacts.filter(a=>{
+        const text = (a.name + " " + a.origin).toLowerCase();
+        return searchTerms.some(term => text.includes(term));
+    });
+    renderArtifacts(filtered);
+});
+
+// Upload
+uploadForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    if(!currentUsername){ alert("Sign up to upload artifacts."); return; }
+    const name = document.getElementById("artifactName").value;
+    const origin = document.getElementById("artifactOrigin").value;
+    const fileInput = document.getElementById("artifactImage");
+    const reader = new FileReader();
+    reader.onload = function(){
+        const newArtifact = { 
+            name, origin, image: reader.result, 
+            username: currentUsername, email: currentEmail 
+        };
+        allArtifacts.push(newArtifact);
+        localStorage.setItem("artifacts", JSON.stringify(allArtifacts));
+        renderArtifacts(allArtifacts);
+        uploadForm.reset();
+    }
+    reader.readAsDataURL(fileInput.files[0]);
+});
+
+// Initialize UI
+updateUIAfterLogin();
+</script>
+</body>
+</html>
